@@ -1,0 +1,81 @@
+name: Long-session animation regression
+on:
+  push:
+    branches: [qa/long-session-animation]
+permissions:
+  contents: read
+jobs:
+  static:
+    name: Static checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "24"
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: "1.4.4"
+      - run: npm ci --ignore-scripts
+      - run: npm run check
+        env:
+          NODE_OPTIONS: --max-old-space-size=10240
+      - run: npm run knip:check
+  animation:
+    name: Animation on ${{ matrix.os }} with ${{ matrix.runtime }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        runtime: [node, bun]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "24"
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: "1.4.4"
+      - run: npm ci --ignore-scripts
+      - name: Real runtime clock and integrated regression
+        working-directory: packages/coding-agent
+        shell: bash
+        run: |
+          if [ '${{ matrix.runtime }}' = bun ]; then
+            bun --bun ../../node_modules/vitest/vitest.mjs run test/suite/long-session-animation-regression.test.ts
+          else
+            node ../../node_modules/vitest/vitest.mjs run test/suite/long-session-animation-regression.test.ts
+          fi
+      - name: Scoped animation coverage and status regressions
+        if: matrix.runtime == 'node'
+        working-directory: packages/coding-agent
+        shell: bash
+        run: |
+          node ../../node_modules/vitest/vitest.mjs run \
+            test/suite/animation-cadence.test.ts test/suite/long-session-animation-regression.test.ts \
+            test/suite/exploration-lifecycle.test.ts test/suite/exploration-live.test.ts \
+            test/suite/exploration-mouse.test.ts test/suite/exploration-project-rules.test.ts \
+            test/suite/exploration-replay.test.ts test/interactive-mode-status.test.ts \
+            test/interactive-mode-hook-status.test.ts test/status-indicator.test.ts \
+            --coverage --coverage.include=src/modes/interactive/components/animation-frame.ts \
+            --coverage.include=src/modes/interactive/components/animated-status-text.ts \
+            --coverage.include=src/modes/interactive/working-status-animation.ts \
+            --coverage.include=src/modes/interactive/components/exploration-group.ts \
+            --coverage.include=src/modes/interactive/components/exploration-transcript-container.ts \
+            --coverage.reporter=text --coverage.reporter=json-summary \
+            --coverage.thresholds.lines=95 --coverage.thresholds.statements=95 \
+            --coverage.thresholds.branches=95 --coverage.thresholds.functions=95 \
+            --coverage.thresholds.perFile=true
+      - name: Loader's native runner coverage and rendering lifecycle
+        if: matrix.runtime == 'node'
+        working-directory: packages/tui
+        run: node --test --import tsx --import ./test/setup-multiplexer-env.mjs --experimental-test-coverage --test-coverage-include=**/src/components/loader.ts --test-coverage-lines=95 --test-coverage-branches=95 --test-coverage-functions=95 test/loader.test.ts test/loader-presentation.test.ts
+      - name: Upload coverage
+        if: always() && matrix.runtime == 'node'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: animation-coverage-${{ matrix.os }}
+          path: packages/coding-agent/coverage/coverage-summary.json
