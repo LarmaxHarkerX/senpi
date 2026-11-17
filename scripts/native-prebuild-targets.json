@@ -37,7 +37,7 @@
 	},
 	{
 		"artifact": "native-prebuild-darwin-arm64",
-		"runner": "macos-latest",
+		"runner": "macos-15",
 		"napi_target": "aarch64-apple-darwin",
 		"rust_target": "aarch64-apple-darwin",
 		"node_platform": "darwin",

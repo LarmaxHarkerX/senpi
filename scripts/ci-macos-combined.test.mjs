@@ -13,12 +13,12 @@ const suites = combined?.steps.filter((step) => step.id && /run-tests\.mjs|npm r
 // Runner allocation and required-status wiring are CI configuration contracts (#3130).
 test("CI allocates one macOS runner while retaining the other matrix legs", () => {
 	assert.ok(combined);
-	assert.equal(combined["runs-on"], "macos-latest");
+	assert.equal(combined["runs-on"], "macos-15");
 	// Pull requests run it only with the run-full-ci label (senpi#6834, ci-platform-scope.test.mjs).
 	assert.equal(combined.if, "needs.platform-scope.outputs.full == 'true'");
 	assert.deepEqual(Object.keys(jobs).filter((name) =>
 		JSON.stringify(jobs[name]["runs-on"]).includes("macos") ||
-		jobs[name].strategy?.matrix.os?.includes("macos-latest")), ["macos-combined"]);
+		jobs[name].strategy?.matrix.os?.includes("macos-15")), ["macos-combined"]);
 	for (const name of originals) {
 		const os = jobs[name].strategy.matrix.os;
 		if (["webview-kernel", "terminal-cross-os", "inspector-handoff"].includes(name)) {

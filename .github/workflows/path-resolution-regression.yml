@@ -12,6 +12,7 @@ permissions:
 # Fork-only launcher. The proposed upstream branch does not contain this file.
 # The repair code is unchanged. The fork also selects an Intel host for darwin-x64 because the
 # original macos-latest jobs repeatedly retired without acquiring an ARM64 runner.
+# ARM64 jobs use the explicit macOS 15 image after the macos-latest allocation failures persisted.
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
