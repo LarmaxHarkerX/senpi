@@ -10,7 +10,8 @@ permissions:
   pull-requests: read
 
 # Fork-only launcher. The proposed upstream branch does not contain this file.
-# The parent commit is the repair under test; this commit changes only this launcher.
+# The repair code is unchanged. The fork also selects an Intel host for darwin-x64 because the
+# original macos-latest jobs repeatedly retired without acquiring an ARM64 runner.
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml

@@ -25,7 +25,7 @@
 	},
 	{
 		"artifact": "native-prebuild-darwin-x64",
-		"runner": "macos-latest",
+		"runner": "macos-15-intel",
 		"napi_target": "x86_64-apple-darwin",
 		"rust_target": "x86_64-apple-darwin",
 		"node_platform": "darwin",
