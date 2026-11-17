@@ -1,0 +1,24 @@
+name: Fork path resolution full CI
+
+on:
+  push:
+    branches: [ci/path-resolution-full]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+# Fork-only launcher. The proposed upstream branch does not contain this file.
+# The parent commit is the repair under test; this commit changes only this launcher.
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+  read-summary-binary-parity:
+    uses: ./.github/workflows/read-summary-binary-parity.yml
+  session-worker-compile:
+    uses: ./.github/workflows/session-worker-compile.yml
+  native-prebuilds:
+    uses: ./.github/workflows/native-prebuilds.yml
+    with:
+      full_ci: true
