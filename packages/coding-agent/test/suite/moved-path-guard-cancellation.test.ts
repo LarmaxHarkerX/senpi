@@ -8,6 +8,14 @@ const pending = vi.hoisted(() => ({
 	signal: undefined as AbortSignal | undefined,
 	release: undefined as ((path: string) => void) | undefined,
 }));
+vi.mock("node:os", async (original) => {
+	const actual = await original<typeof import("node:os")>();
+	return {
+		...actual,
+		// Linux Bun caches homedir independently of JS env mutations; the fixture's home must own this input.
+		homedir: () => process.env.HOME ?? actual.homedir(),
+	};
+});
 vi.mock("../../src/core/tools/filesystem-policy.ts", async (original) => {
 	const actual = await original<typeof import("../../src/core/tools/filesystem-policy.ts")>();
 	return {
