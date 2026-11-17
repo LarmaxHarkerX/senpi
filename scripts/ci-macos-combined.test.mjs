@@ -51,7 +51,7 @@ test("shared setup preserves the toolchain pins and installs and builds once", (
 
 test("all original commands and execution guards remain with WebView last", () => {
 	assert.deepEqual(suites.map((step) => step.id),
-		["process", "rpc", "terminal_pty", "terminal_extension", "inspector", "webview"]);
+		["process", "rpc", "terminal_pty", "terminal_extension", "path_resolution", "inspector", "webview"]);
 	for (const name of originals) {
 		const original = jobs[name];
 		let partBudget = 0;

@@ -62,6 +62,19 @@ export function defineFileCases(runner: ConformanceRunner, target: ConformanceTa
 	});
 
 	describe("files.write", () => {
+		// senpi#3404: cancelled operations must not mutate a file through the policy gate.
+		it(
+			"an already cancelled write leaves the existing bytes unchanged",
+			withFixture(target, async ({ ops, ctx, root }) => {
+				const controller = new AbortController();
+				controller.abort();
+				await rejectsWith(
+					ops.files.write({ path: "inside.txt", bytes: Buffer.from("wrong") }, ctx({ signal: controller.signal })),
+					"aborted",
+				);
+				assert.equal(await readFile(join(root, "inside.txt"), "utf8"), INSIDE_TEXT);
+			}),
+		);
 		it(
 			"inside root writes the bytes",
 			withFixture(target, async ({ ops, ctx, root }) => {

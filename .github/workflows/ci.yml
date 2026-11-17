@@ -1739,7 +1739,7 @@ jobs:
     # (process and WebView: 12), else its old job cap (the terminal part's two steps share its 30).
     # The job cap is the sum of those step caps plus 10 minutes of shared setup, so one hung suite
     # holds the macOS runner only for its own budget and the later suites still run.
-    timeout-minutes: 99
+    timeout-minutes: 102
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -1870,6 +1870,17 @@ jobs:
         run: node ../../scripts/run-tests.mjs vitest run test/suite/terminal-extension.test.ts test/suite/terminal-settings-notify.test.ts test/suite/shell-config-kind.test.ts test/suite/regressions/issue-1229-win-fswatch-noncanonical-abort.test.ts
         working-directory: packages/coding-agent
 
+      - name: Path resolution and guard cancellation regressions
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.terminal_test_temp_snapshot.outcome == 'success' }}
+        id: path_resolution
+        timeout-minutes: 3
+        shell: bash
+        run: |
+          (cd packages/machine-ops && node ../../scripts/run-tests.mjs vitest run test/filesystem-resolution.test.ts)
+          (cd packages/coding-agent && node ../../scripts/run-tests.mjs vitest run test/suite/moved-path-guard-cancellation.test.ts)
+          (cd packages/machine-ops && node ../../scripts/run-tests.mjs bun --bun ../../node_modules/vitest/vitest.mjs run test/filesystem-resolution.test.ts)
+          (cd packages/coding-agent && node ../../scripts/run-tests.mjs bun --bun ../../node_modules/vitest/vitest.mjs run test/suite/moved-path-guard-cancellation.test.ts)
+
       - name: Check OS temp after tests
         if: always() && steps.terminal_test_temp_snapshot.outcome == 'success'
         shell: bash
@@ -1985,7 +1996,7 @@ jobs:
         # Windows only for a full run (senpi#3957); Linux always.
         os: ${{ fromJSON(needs.platform-scope.outputs.full == 'true' && '["ubuntu-latest", "windows-latest"]' || '["ubuntu-latest"]') }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 33
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -1995,6 +2006,11 @@ jobs:
         with:
           node-version: "24"
           cache: npm
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.4.4"
 
       - name: Install dependencies
         run: npm ci --ignore-scripts
@@ -2015,6 +2031,15 @@ jobs:
         shell: bash
         run: node ../../scripts/run-tests.mjs vitest run test/suite/terminal-extension.test.ts test/suite/terminal-settings-notify.test.ts test/suite/shell-config-kind.test.ts test/suite/regressions/issue-1229-win-fswatch-noncanonical-abort.test.ts
         working-directory: packages/coding-agent
+      - name: Path resolution and guard cancellation regressions
+        if: ${{ !cancelled() && steps.test_temp_snapshot.outcome == 'success' }}
+        timeout-minutes: 3
+        shell: bash
+        run: |
+          (cd packages/machine-ops && node ../../scripts/run-tests.mjs vitest run test/filesystem-resolution.test.ts)
+          (cd packages/coding-agent && node ../../scripts/run-tests.mjs vitest run test/suite/moved-path-guard-cancellation.test.ts)
+          (cd packages/machine-ops && node ../../scripts/run-tests.mjs bun --bun ../../node_modules/vitest/vitest.mjs run test/filesystem-resolution.test.ts)
+          (cd packages/coding-agent && node ../../scripts/run-tests.mjs bun --bun ../../node_modules/vitest/vitest.mjs run test/suite/moved-path-guard-cancellation.test.ts)
       - name: Check OS temp after tests
         if: always() && steps.test_temp_snapshot.outcome == 'success'
         shell: bash

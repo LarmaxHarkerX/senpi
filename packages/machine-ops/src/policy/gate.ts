@@ -26,8 +26,8 @@ export async function checkPath(
 	const root = ctx.scope.root;
 	const filesystem = ctx.policy.filesystem;
 	if (root === undefined && filesystem === undefined) return;
-	const canonicalPath = await canonicalizeFilesystemPath(absolutePath);
-	if (root !== undefined && !contains(await canonicalizeFilesystemPath(root), canonicalPath)) {
+	const canonicalPath = await canonicalizeFilesystemPath(absolutePath, ctx.signal);
+	if (root !== undefined && !contains(await canonicalizeFilesystemPath(root, ctx.signal), canonicalPath)) {
 		ctx.audit?.({ op, principal: ctx.principal, target: canonicalPath, verdict: "denied" });
 		throw new MachineOpError("policy_denied", `${absolutePath} is outside the scope root`);
 	}
